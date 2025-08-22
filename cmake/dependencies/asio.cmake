@@ -21,7 +21,7 @@ if(USE_ASIO_STANDALONE)
     if(WIN32)
         # windows specific settings
         target_compile_definitions(ring-asio INTERFACE 
-            _WIN32_WINNT=0x0601  # Windows 7 or later
+            _WIN32_WINNT=0x0A00  # Windows 10 or later
         )
         target_link_libraries(ring-asio INTERFACE ws2_32 mswsock)
     else()
