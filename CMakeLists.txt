@@ -37,6 +37,7 @@ add_subdirectory(third_party)
 
 # include modules
 include(modules/core)
+include(modules/logging)
 include(modules/network)
 
 # build monolithic library

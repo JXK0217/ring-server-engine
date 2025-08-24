@@ -9,6 +9,7 @@ option(BUILD_TESTS "Build tests" ON)
 
 # module options
 option(BUILD_CORE_MODULE "Build core module" ON)
+option(BUILD_LOGGING_MODULE "Build logging module" ON)
 option(BUILD_NETWORK_MODULE "Build network module" ON)
 
 # functionality options

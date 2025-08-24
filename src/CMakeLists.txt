@@ -3,10 +3,6 @@
 # gather all source files
 set(ALL_SOURCES)
 
-# include module source files
-include(../cmake/modules/core.cmake)
-include(../cmake/modules/network.cmake)
-
 if(BUILD_MONOLITHIC_LIB)
     list(APPEND ALL_SOURCES ring.cpp)
 endif()
