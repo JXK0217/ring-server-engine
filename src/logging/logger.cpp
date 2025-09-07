@@ -43,32 +43,65 @@ log_level from_spdlog_level(spdlog::level::level_enum level)
     }
 }
 
+struct log_service_config
+{
+    size_t queue_size = 8192;
+};
+
 class log_service::impl final
 {
 public:
-    impl() : _default_level(log_level::info) {}
+    impl()
+    {
+        initialize();
+    }
     ~impl()
     {
         shutdown();
     }
 public:
-    void initialize(const logger_config& config)
+    void initialize()
     {
         std::lock_guard lock(_mutex);
 
-        if (config.async)
-        {
-            spdlog::init_thread_pool(config.queue_size, 1);
-        }
-        
-        __create_logger(config);
+        spdlog::drop_all();
+        spdlog::flush_on(spdlog::level::warn);
+        spdlog::flush_every(std::chrono::seconds(3));
+
+        auto logger = __create_logger({ .name = "", .pattern = "[%Y-%m-%d %H:%M:%S.%e] [%l] [thread %t] %v" });
+        _default_logger = logger;
     }
     void shutdown()
     {
         std::lock_guard lock(_mutex);
 
         _loggers.clear();
+        _default_logger.reset();
         spdlog::shutdown();
+    }
+    std::shared_ptr<logger> create_logger(const logger_config& config)
+    {
+        std::lock_guard lock(_mutex);
+
+        auto it = _loggers.find(config.name);
+        if(it != _loggers.end())
+        {
+            // TODO needs a custom throw
+            throw std::runtime_error("Logger with name '" + config.name + "' already exists.");
+        }
+        return __create_logger(config);
+    }
+    void set_default_logger(std::shared_ptr<logger> logger)
+    {
+        std::lock_guard lock(_mutex);
+
+        _default_logger = logger;
+    }
+    std::shared_ptr<logger> get_default_logger()
+    {
+        std::lock_guard lock(_mutex);
+
+        return _default_logger;
     }
     std::shared_ptr<logger> get_logger(std::string_view name)
     {
@@ -79,28 +112,20 @@ public:
         {
             return it->second;
         }
-
-        auto logger = std::make_shared<ring::logging::logger>(std::string(name));
-        _loggers[name.data()] = logger;
+        auto logger = __create_logger({ .name = name.data() });
         return logger;
-    }
-    void set_default_level(log_level level)
-    {
-        std::lock_guard lock(_mutex);
-        
-        _default_level = level;
     }
     void flush_all()
     {
         std::lock_guard lock(_mutex);
         
-        for (auto& [name, logger] : _loggers)
+        for (auto& [_, logger] : _loggers)
         {
             logger->flush();
         }
     }
 private:
-    void __create_logger(const logger_config& config)
+    std::shared_ptr<logger> __create_logger(const logger_config& config)
     {
         std::vector<spdlog::sink_ptr> sinks;
         
@@ -118,11 +143,15 @@ private:
             file_sink->set_pattern(config.pattern);
             sinks.push_back(file_sink);
         }
-        
+
         std::shared_ptr<spdlog::logger> spd_logger;
-        
         if (config.async)
         {
+            if (!spdlog::thread_pool())
+            {
+                spdlog::init_thread_pool(_service_config.queue_size, 1);
+            }
+
             spd_logger = std::make_shared<spdlog::async_logger>(
                 config.name, sinks.begin(), sinks.end(), 
                 spdlog::thread_pool(), spdlog::async_overflow_policy::block);
@@ -131,12 +160,12 @@ private:
         {
             spd_logger = std::make_shared<spdlog::logger>(config.name, sinks.begin(), sinks.end());
         }
-        
         spd_logger->set_level(to_spdlog_level(config.level));
         spdlog::register_logger(spd_logger);
-        
-        auto logger = std::make_shared<ring::logging::logger>(config.name);
+
+        auto logger = std::make_shared<ring::logging::logger>(spd_logger->name());
         _loggers[config.name] = logger;
+        return logger;
     }
 private:
     struct string_hash
@@ -154,9 +183,10 @@ private:
         }
     };
 private:
-    std::unordered_map<std::string, std::shared_ptr<logger>, string_hash, string_equal> _loggers;
-    log_level _default_level;
     std::mutex _mutex;
+    log_service_config _service_config;
+    std::unordered_map<std::string, std::shared_ptr<logger>, string_hash, string_equal> _loggers;
+    std::shared_ptr<logger> _default_logger;
 };
 
 log_service::log_service() :
@@ -166,9 +196,9 @@ log_service::log_service() :
 log_service::~log_service()
 {}
 
-void log_service::initialize(const logger_config& config)
+void log_service::initialize()
 {
-    _impl->initialize(config);
+    _impl->initialize();
 }
 
 void log_service::shutdown()
@@ -176,14 +206,19 @@ void log_service::shutdown()
     _impl->shutdown();
 }
 
+std::shared_ptr<logger> log_service::create_logger(const logger_config& config)
+{
+    return _impl->create_logger(config);
+}
+
+std::shared_ptr<logger> log_service::get_default_logger()
+{
+    return _impl->get_default_logger();
+}
+
 std::shared_ptr<logger> log_service::get_logger(std::string_view name)
 {
     return _impl->get_logger(name);
-}
-
-void log_service::set_default_level(log_level level)
-{
-    _impl->set_default_level(level);
 }
 
 void log_service::flush_all()
@@ -194,12 +229,22 @@ void log_service::flush_all()
 class logger::impl final
 {
 public:
-    impl(const std::string& name) : _name(name)
+    impl(const std::string& name) :
+        _name(name)
     {
-        _spd_logger = spdlog::get(_name);
-        if (!_spd_logger)
+        auto spd_logger = spdlog::get(_name);
+        if (!spd_logger)
         {
-            _spd_logger = spdlog::stdout_color_mt(_name);
+            // TODO needs a custom throw
+            throw std::runtime_error("spdlog logger with name '" + _name + "' does not exist.");
+        }
+        _spd_logger = spd_logger;
+    }
+    ~impl()
+    {
+        if (_spd_logger)
+        {
+            spdlog::drop(_spd_logger->name());
         }
     }
 public:
@@ -233,12 +278,14 @@ private:
     std::shared_ptr<spdlog::logger> _spd_logger;
 };
 
-logger::logger(const std::string& name) :
+logger::logger(const std::string &name) :
     _impl(std::make_unique<impl>(name))
-{}
+{
+}
 
 logger::~logger()
-{}
+{
+}
 
 bool logger::should_log(log_level level) const
 {

@@ -18,24 +18,3 @@ add_subdirectory(performance)
 
 # add test fixtures
 add_subdirectory(fixtures)
-
-add_executable(test_runner
-    main.cpp
-)
-
-if(TARGET test_logging)
-    add_dependencies(test_runner test_logging)
-endif()
-
-target_link_libraries(test_runner
-    PRIVATE
-        gtest
-        gmock
-)
-
-add_test(NAME test_runner COMMAND test_runner)
-
-set_tests_properties(test_runner PROPERTIES
-    TIMEOUT 300
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)

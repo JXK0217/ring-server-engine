@@ -25,13 +25,12 @@ struct logger_config
 {
     std::string name = "default";
     log_level level = log_level::info;
-    std::string pattern = "[%Y-%m-%d %H:%M:%S.%e] [%l] [%n] %v";
-    size_t max_file_size = 1024 * 1024 * 10;
-    size_t max_files = 5;
+    std::string pattern = "[%Y-%m-%d %H:%M:%S.%e] [%l] [thread %t] [%n] %v";
+    size_t max_file_size = 100ul * 1024 * 1024;
+    size_t max_files = 1024;
     bool console = true;
-    std::string file;
-    bool async = false;
-    size_t queue_size = 8192;
+    std::string file = "";
+    bool async = true;
 };
 
 class logger;
@@ -50,10 +49,11 @@ public:
         static log_service instance;
         return instance;
     }
-    void initialize(const logger_config& config = {});
+    void initialize();
     void shutdown();
-    std::shared_ptr<logger> get_logger(std::string_view name = "default");
-    void set_default_level(log_level level);
+    std::shared_ptr<logger> create_logger(const logger_config& config);
+    std::shared_ptr<logger> get_default_logger();
+    std::shared_ptr<logger> get_logger(std::string_view name);
     void flush_all();
 public:
     class impl;
@@ -119,6 +119,44 @@ private:
     std::unique_ptr<impl> _impl;
 };
 
+template <typename... Args>
+void trace(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->trace(fmt, std::forward<Args>(args)...);
+}
+template <typename... Args>
+void debug(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->debug(fmt, std::forward<Args>(args)...);
+}
+template <typename... Args>
+void info(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->info(fmt, std::forward<Args>(args)...);
+}
+template <typename... Args>
+void warn(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->warn(fmt, std::forward<Args>(args)...);
+}
+template <typename... Args>
+void error(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->error(fmt, std::forward<Args>(args)...);
+}
+template <typename... Args>
+void critical(std::format_string<Args...> fmt, Args&&... args)
+{
+    log_service::instance().get_default_logger()->critical(fmt, std::forward<Args>(args)...);
+}
+
 } // namespace ring::logging
+
+#define RING_TRACE(...)     ring::logging::trace(__VA_ARGS__)
+#define RING_DEBUG(...)     ring::logging::debug(__VA_ARGS__)
+#define RING_INFO(...)      ring::logging::info(__VA_ARGS__)
+#define RING_WARN(...)      ring::logging::warn(__VA_ARGS__)
+#define RING_ERROR(...)     ring::logging::error(__VA_ARGS__)
+#define RING_CRITICAL(...)  ring::logging::critical(__VA_ARGS__)
 
 #endif // !__RING_LOGGING_LOGGER_H__

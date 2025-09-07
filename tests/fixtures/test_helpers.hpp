@@ -11,9 +11,6 @@ class TestBase: public ::testing::Test
 protected:
     void SetUp() override {}
     void TearDown() override {}
-
-    static std::string generate_test_data(size_t size);
-    static void sleep_ms(int ms);
 };
 
 } // namespace ring::test
