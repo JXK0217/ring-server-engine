@@ -71,3 +71,9 @@ TEST_F(LoggerTest, DefaultMacroLog)
 }
 
 } // namespace ring::logging
+
+int main(int argc, char** argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
