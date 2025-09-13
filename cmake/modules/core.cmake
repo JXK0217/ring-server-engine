@@ -36,11 +36,13 @@ if(BUILD_CORE_MODULE)
 
         # link dependencies
         target_link_libraries(ring-core PRIVATE ${RING_DEPENDENCIES})
+
         # add core module to enabled modules
         list(APPEND ENABLED_MODULES "ring-core")
 
         # create an alias for the core module
         add_library(ring::core ALIAS ring-core)
+        target_precompile_headers(ring-core PRIVATE ${CMAKE_SOURCE_DIR}/include/ring/pch.h)
     endif()
 
     # add core module sources to the monolithic library

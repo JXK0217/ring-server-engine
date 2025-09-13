@@ -51,6 +51,7 @@ if(BUILD_MONOLITHIC_LIB)
 
     # add wrapper sources
     target_sources(ring-server PRIVATE src/ring.cpp)
+    target_precompile_headers(ring-server PRIVATE ${CMAKE_SOURCE_DIR}/include/ring/pch.h)
   
     # set include directories
     target_include_directories(ring-server

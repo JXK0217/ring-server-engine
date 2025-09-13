@@ -36,11 +36,13 @@ if(BUILD_LOGGING_MODULE)
 
         # link dependencies
         target_link_libraries(ring-logging PRIVATE ${RING_DEPENDENCIES})
+
         # add logging module to enabled modules
         list(APPEND ENABLED_MODULES "ring-logging")
 
         # create an alias for the logging module
         add_library(ring::logging ALIAS ring-logging)
+        target_precompile_headers(ring-logging PRIVATE ${CMAKE_SOURCE_DIR}/include/ring/pch.h)
     endif()
 
     # add logging module sources to the monolithic library

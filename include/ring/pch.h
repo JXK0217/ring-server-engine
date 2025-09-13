@@ -1,0 +1,52 @@
+#ifndef __RING_PCH_H__
+#define __RING_PCH_H__
+
+#include <algorithm>
+#include <any>
+#include <array>
+#include <atomic>
+#include <bit>
+#include <chrono>
+#include <cmath>
+#include <concepts>
+#include <condition_variable>
+#include <exception>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numbers>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <random>
+#include <ranges>
+#include <ratio>
+#include <regex>
+#include <set>
+#include <shared_mutex>
+#include <source_location>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <string_view>
+#include <string>
+#include <thread>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <variant>
+#include <vector>
+
+#include "ring/logging/logger.h"
+
+#endif // !__RING_PCH_H__

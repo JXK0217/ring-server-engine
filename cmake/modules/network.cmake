@@ -42,6 +42,7 @@ if(BUILD_NETWORK_MODULE)
 
         # create an alias for the network module
         add_library(ring::network ALIAS ring-network)
+        target_precompile_headers(ring-network PRIVATE ${CMAKE_SOURCE_DIR}/include/ring/pch.h)
     endif()
 
     # add network module sources to the monolithic library
