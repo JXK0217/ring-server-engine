@@ -13,6 +13,7 @@ option(BUILD_LOGGING_MODULE "Build logging module" ON)
 option(BUILD_NETWORK_MODULE "Build network module" ON)
 
 # functionality options
+option(ENABLE_ASAN "Enable Asan" ON)
 option(ENABLE_REDIS "Enable Redis support" ON)
 
 # third-party library options

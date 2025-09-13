@@ -32,3 +32,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 else()
     message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}")
 endif()
+
+if(ENABLE_ASAN)
+    add_compile_options(/fsanitize=address)
+    add_link_options(/fsanitize=address)
+endif()
