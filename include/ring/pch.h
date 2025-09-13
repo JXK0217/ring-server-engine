@@ -47,6 +47,7 @@
 #include <variant>
 #include <vector>
 
+#include "ring/core/types.h"
 #include "ring/logging/logger.h"
 
 #endif // !__RING_PCH_H__
