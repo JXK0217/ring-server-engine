@@ -2,7 +2,7 @@
 
 # build options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_MONOLITHIC_LIB "Build monolithic library" ON)
+# option(BUILD_MONOLITHIC_LIB "Build monolithic library" ON)
 option(BUILD_MODULAR_LIBS "Build modular libraries" ON)
 option(BUILD_EXAMPLES "Build example applications" ON)
 option(BUILD_TESTS "Build tests" ON)

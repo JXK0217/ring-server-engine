@@ -1,11 +1,11 @@
-#ifndef __RING_LOGGING_LOGGER_H__
-#define __RING_LOGGING_LOGGER_H__
+#ifndef __RING_LOGGING_LOGGER_HPP__
+#define __RING_LOGGING_LOGGER_HPP__
 
 #include <format>
 #include <memory>
 #include <string>
 
-#include "ring/core/export.h"
+#include "ring/core/export.hpp"
 
 namespace ring::logging
 {
@@ -159,4 +159,4 @@ void critical(std::format_string<Args...> fmt, Args&&... args)
 #define RING_ERROR(...)     ring::logging::error(__VA_ARGS__)
 #define RING_CRITICAL(...)  ring::logging::critical(__VA_ARGS__)
 
-#endif // !__RING_LOGGING_LOGGER_H__
+#endif // !__RING_LOGGING_LOGGER_HPP__

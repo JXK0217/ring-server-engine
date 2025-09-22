@@ -8,6 +8,8 @@ if(NOT USE_SYSTEM_SPDLOG)
 
     add_library(ring-spdlog INTERFACE)
     add_library(ring::spdlog ALIAS ring-spdlog)
+
+    set_target_properties(ring-spdlog PROPERTIES EXCLUDE_FROM_ALL TRUE)
     
     if(TARGET spdlog)
         target_link_libraries(ring-spdlog INTERFACE spdlog)

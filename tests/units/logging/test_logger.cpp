@@ -2,7 +2,7 @@
 
 #include "test_helpers.hpp"
 
-#include "ring/logging/logger.h"
+#include "ring/logging/logger.hpp"
 
 namespace ring::logging
 {

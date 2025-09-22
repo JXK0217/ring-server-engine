@@ -7,7 +7,7 @@ if(BUILD_LOGGING_MODULE)
 
     target_link_libraries(test_logging
         PRIVATE
-            ring-logging
+            ring-server
             gmock
     )
 

@@ -38,10 +38,10 @@ foreach(CONFIG ${CMAKE_BUILD_TYPE})
 endforeach()
 
 # Set default output name postfixes
-set(CMAKE_DEBUG_POSTFIX "-d")
+set(CMAKE_DEBUG_POSTFIX "d")
 set(CMAKE_RELEASE_POSTFIX "")
-set(CMAKE_MINSIZEREL_POSTFIX "-minsize")
-set(CMAKE_RELWITHDEBINFO_POSTFIX "-reldeb")
+set(CMAKE_MINSIZEREL_POSTFIX "_s")
+set(CMAKE_RELWITHDEBINFO_POSTFIX "_rd")
 
 # Set project-specific macro definitions
 add_definitions(-DRING_PROJECT_NAME="${PROJECT_NAME}")

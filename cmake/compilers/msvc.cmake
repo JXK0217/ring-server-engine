@@ -9,6 +9,8 @@ add_definitions(-DRING_COMPILER_MSVC)
 # add MSVC specific compiler flags
 add_compile_options(/W4 /WX)  # Enable warnings and treat them as errors
 add_compile_options(/MP)  # Enable multi-processor compilation
+add_compile_options(/wd4251)
+
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)  # Disable secure warnings
 add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)  # Disable deprecated warnings for Winsock
 add_definitions(-D_WIN32_WINNT=0x0A00)  # Set minimum Windows version to Windows 10

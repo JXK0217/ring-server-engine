@@ -35,46 +35,50 @@ endif()
 # add third-party dependencies
 add_subdirectory(third_party)
 
-# include modules
-include(modules/core)
-include(modules/logging)
-include(modules/network)
+add_subdirectory(src/core)
+add_subdirectory(src/logging)
+add_subdirectory(src/network)
 
-# build monolithic library
-if(BUILD_MONOLITHIC_LIB)
-    add_library(ring-server)
+add_library(ring-server)
 
-    # add enabled modules sources
-    foreach(MODULE ${ENABLED_MODULES})
-        target_sources(ring-server PRIVATE ${${MODULE}_SOURCES})
-    endforeach()
+# add enabled modules sources
+foreach(MODULE ${RING_MODULES})
+    target_sources(ring-server PRIVATE ${${MODULE}_SOURCES})
 
-    # add wrapper sources
-    target_sources(ring-server PRIVATE src/ring.cpp)
-    target_precompile_headers(ring-server PRIVATE ${CMAKE_SOURCE_DIR}/include/ring/pch.h)
-  
-    # set include directories
-    target_include_directories(ring-server
-        PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-  
-    # set compiler properties
-    set_target_properties(ring-server PROPERTIES
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
-        VERSION ${RING_SERVER_VERSION}
-        SOVERSION ${RING_SERVER_VERSION_MAJOR}
-        OUTPUT_NAME "ring-server"
-    )
-  
-    target_compile_options(ring-server PRIVATE ${COMPILER_WARNINGS})
-  
-    # link dependencies
-    target_link_libraries(ring-server PRIVATE ${RING_DEPENDENCIES})
-endif()
+    if(RING_VERBOSE)
+        message(STATUS "All ${MODULE} files:")
+        foreach(SRC ${${MODULE}_SOURCES})
+            message(STATUS "  ${SRC}")
+        endforeach()
+    endif()
+endforeach()
+
+# add wrapper sources
+target_sources(ring-server PRIVATE src/ring.cpp)
+target_precompile_headers(ring-server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/ring/pch.hpp)
+
+# set include directories
+target_include_directories(ring-server
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+# set compiler properties
+set_target_properties(ring-server PROPERTIES
+    VERSION ${RING_SERVER_VERSION}
+    SOVERSION ${RING_SERVER_VERSION_MAJOR}
+    OUTPUT_NAME "ring-server"
+)
+
+target_compile_options(ring-server PRIVATE ${COMPILER_WARNINGS})
+
+# link dependencies
+target_link_libraries(ring-server 
+    PRIVATE 
+        $<BUILD_INTERFACE:${RING_DEPENDENCIES}>
+)
 
 # add examples and tests
 if(BUILD_EXAMPLES)
@@ -89,65 +93,36 @@ endif()
 # install configuration
 include(GNUInstallDirs)
 
+configure_file(
+    include/ring/version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/ring/version.hpp
+    @ONLY
+)
+
 # install headers
 install(
-    DIRECTORY include/
+    DIRECTORY include/ring
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.hpp"
 )
 
 # install monolithic library
-if(BUILD_MONOLITHIC_LIB)
-    install(
-        TARGETS ring-server
-        EXPORT ring-server-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-endif()
-
-# install individual modules
-foreach(MODULE ${ENABLED_MODULES})
-    install(
-        TARGETS ${MODULE}
-        EXPORT ring-server-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-endforeach()
-
-# generate configuration files
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/ring-server-config-version.cmake"
-    VERSION ${RING_SERVER_VERSION}
-    COMPATIBILITY AnyNewerVersion
+install(
+    TARGETS ring-server
+    EXPORT ring-server-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-export(EXPORT ring-server-targets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/ring-server-targets.cmake"
-    NAMESPACE ring::
-)
-
-configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ring-server-config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/ring-server-config.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ring-server
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/ring/version.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ring
 )
 
 install(
     EXPORT ring-server-targets
     FILE ring-server-targets.cmake
     NAMESPACE ring::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ring-server
-)
-
-install(
-    FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/ring-server-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/ring-server-config-version.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ring-server
 )

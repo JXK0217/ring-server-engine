@@ -17,6 +17,8 @@ if(USE_ASIO_STANDALONE)
     # add compile definitions (ensure standalone mode)
     target_compile_definitions(ring-asio INTERFACE ASIO_STANDALONE)
 
+    set_target_properties(ring-asio PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
     # platform-specific settings
     if(WIN32)
         # windows specific settings

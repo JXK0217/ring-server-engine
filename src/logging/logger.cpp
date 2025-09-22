@@ -1,4 +1,4 @@
-#include "ring/logging/logger.h"
+#include "ring/logging/logger.hpp"
 
 #include <memory>
 #include <unordered_map>

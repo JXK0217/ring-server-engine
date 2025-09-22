@@ -1,5 +1,5 @@
-#ifndef __RING_PCH_H__
-#define __RING_PCH_H__
+#ifndef __RING_PCH_HPP__
+#define __RING_PCH_HPP__
 
 #include <algorithm>
 #include <any>
@@ -47,7 +47,7 @@
 #include <variant>
 #include <vector>
 
-#include "ring/core/types.h"
-#include "ring/logging/logger.h"
+#include "ring/core/types.hpp"
+#include "ring/logging/logger.hpp"
 
-#endif // !__RING_PCH_H__
+#endif // !__RING_PCH_HPP__
