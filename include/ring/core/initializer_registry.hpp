@@ -1,6 +1,7 @@
 #ifndef __RING_CORE_INITIALIZER_REGISTRY_HPP__
 #define __RING_CORE_INITIALIZER_REGISTRY_HPP__
 
+#include <algorithm>
 #include <functional>
 #include <ranges>
 #include <string>
