@@ -86,7 +86,7 @@ public:
         auto it = _loggers.find(config.name);
         if(it != _loggers.end())
         {
-            // TODO needs a custom throw
+            // TODO exception
             throw std::runtime_error("Logger with name '" + config.name + "' already exists.");
         }
         return __create_logger(config);
@@ -235,7 +235,7 @@ public:
         auto spd_logger = spdlog::get(_name);
         if (!spd_logger)
         {
-            // TODO needs a custom throw
+            // TODO exception
             throw std::runtime_error("spdlog logger with name '" + _name + "' does not exist.");
         }
         _spd_logger = spd_logger;
