@@ -10,6 +10,8 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
 
+#include "ring/core/exception.hpp"
+
 namespace ring::logging
 {
 
@@ -86,8 +88,7 @@ public:
         auto it = _loggers.find(config.name);
         if(it != _loggers.end())
         {
-            // TODO exception
-            throw std::runtime_error("Logger with name '" + config.name + "' already exists.");
+            throw ring::core::exception("Logger with name '" + config.name + "' already exists.");
         }
         return __create_logger(config);
     }
@@ -235,8 +236,7 @@ public:
         auto spd_logger = spdlog::get(_name);
         if (!spd_logger)
         {
-            // TODO exception
-            throw std::runtime_error("spdlog logger with name '" + _name + "' does not exist.");
+            throw ring::core::exception("spdlog logger with name '" + _name + "' does not exist.");
         }
         _spd_logger = spd_logger;
     }

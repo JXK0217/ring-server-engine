@@ -44,6 +44,9 @@ TEST_F(CoreTest, InitializerRegistry)
     initializer_registry::instance().register_entry("test", std::bind(testInitialize, 0), std::bind(testShutdown, 0), 0);
 
     EXPECT_NO_THROW(initializer_registry::instance().initialize());
+    EXPECT_NO_THROW(initializer_registry::instance().initialize());
+    
+    EXPECT_NO_THROW(initializer_registry::instance().shutdown());
     EXPECT_NO_THROW(initializer_registry::instance().shutdown());
 }
 

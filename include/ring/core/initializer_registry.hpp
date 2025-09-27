@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "ring/core/exception.hpp"
 #include "ring/core/export.hpp"
 
 namespace ring::core
@@ -46,8 +47,7 @@ public:
     {
         if (_initialized)
         {
-            // TODO exception
-            return;
+            throw ring::core::exception("_initialized");
         }
         std::sort(_entries.begin(), _entries.end(), 
             [](const auto& l, const auto& r){ return l.priority < r.priority; });
@@ -64,8 +64,7 @@ public:
     {
         if (!_initialized)
         {
-            // TODO exception
-            return;
+            throw ring::core::exception("!_initialized");
         }
         for (auto& entry: _entries | std::views::reverse)
         {
