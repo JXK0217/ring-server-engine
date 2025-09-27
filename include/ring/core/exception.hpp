@@ -7,8 +7,6 @@
 #include <string>
 #include <string_view>
 
-#include "ring/core/type_traits.hpp"
-
 namespace ring::core
 {
 
