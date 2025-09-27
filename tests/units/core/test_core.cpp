@@ -2,6 +2,7 @@
 
 #include "test_helpers.hpp"
 
+#include "ring/core/exception.hpp"
 #include "ring/core/initializer_registry.hpp"
 
 namespace ring::core
@@ -44,6 +45,31 @@ TEST_F(CoreTest, InitializerRegistry)
 
     EXPECT_NO_THROW(initializer_registry::instance().initialize());
     EXPECT_NO_THROW(initializer_registry::instance().shutdown());
+}
+
+class TestException final: public ring::core::exception
+{
+public:
+    explicit TestException(std::string_view message, std::source_location location = std::source_location::current())
+        : exception(message, location) {}
+public:
+    std::string_view type() const noexcept override
+    {
+        return "TestException";
+    }
+};
+
+TEST_F(CoreTest, Exception)
+{
+    {
+        ring::core::exception e("exception");
+        std::cout << e.detail() << std::endl;
+    }
+    {
+        TestException e("Test");
+        std::cout << e.detail() << std::endl;
+    }
+    throw ring::core::exception("throw");
 }
 
 } // namespace ring::logging
