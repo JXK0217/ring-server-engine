@@ -86,7 +86,7 @@ public:
         std::lock_guard lock(_mutex);
 
         auto it = _loggers.find(config.name);
-        if(it != _loggers.end())
+        if (it != _loggers.end())
         {
             throw ring::core::exception("Logger with name '" + config.name + "' already exists.");
         }
@@ -191,11 +191,9 @@ private:
 };
 
 log_service::log_service() :
-    _impl(std::make_unique<impl>())
-{}
+    _impl(std::make_unique<impl>()) {}
 
-log_service::~log_service()
-{}
+log_service::~log_service() {}
 
 void log_service::initialize()
 {
@@ -279,13 +277,9 @@ private:
 };
 
 logger::logger(const std::string &name) :
-    _impl(std::make_unique<impl>(name))
-{
-}
+    _impl(std::make_unique<impl>(name)) {}
 
-logger::~logger()
-{
-}
+logger::~logger() {}
 
 bool logger::should_log(log_level level) const
 {
