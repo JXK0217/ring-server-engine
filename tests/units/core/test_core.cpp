@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <thread>
+
 #include "test_helpers.hpp"
 
 #include "ring/core/exception.hpp"
 #include "ring/core/initializer_registry.hpp"
+#include "ring/core/object_pool.hpp"
 
 namespace ring::core
 {
@@ -73,6 +76,52 @@ TEST_F(CoreTest, Exception)
         std::cout << e.detail() << std::endl;
     }
     throw ring::core::exception("throw");
+}
+
+TEST_F(CoreTest, ObjectPool)
+{
+    struct TestObject
+    {
+        TestObject(std::string str) :
+            str(std::move(str)) {}
+        std::string str;
+    };
+    
+    {
+        ring::core::object_pool<TestObject> pool;
+        auto *obj = pool.acquire("hello world");
+        std::cout << obj->str << std::endl;
+        pool.release(obj);
+    }
+    {
+        struct Context
+        {
+            ring::core::object_pool_mt<TestObject> pool;
+            std::vector<TestObject*> objects;
+            std::mutex mutex;
+        } context;
+        constexpr size_t threads_size = 20000;
+        std::vector<std::thread> threads;
+        threads.reserve(threads_size);
+        for (auto i = 0ul; i < threads_size; ++i)
+        {
+            threads.emplace_back([](Context *context, size_t i)
+            {
+                auto* obj = context->pool.acquire(std::format("hello world: {}", i));
+                std::lock_guard lock(context->mutex);
+                context->objects.push_back(obj);
+            }, &context, i);
+        }
+        for (auto i = 0ul; i < threads.size(); ++i)
+        {
+            threads[i].join();
+        }
+        for (auto i = 0ul; i < context.objects.size(); ++i)
+        {
+            std::cout << context.objects[i]->str << std::endl;
+            context.pool.release(context.objects[i]);
+        }
+    }
 }
 
 } // namespace ring::logging
