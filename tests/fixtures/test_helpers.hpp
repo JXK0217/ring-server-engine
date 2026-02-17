@@ -1,5 +1,5 @@
-#ifndef __RING_TESTS_FIXTURES_TEST_HELPERS_H__
-#define __RING_TESTS_FIXTURES_TEST_HELPERS_H__
+#ifndef RING_TESTS_FIXTURES_TEST_HELPERS_H__
+#define RING_TESTS_FIXTURES_TEST_HELPERS_H__
 
 #include <gtest/gtest.h>
 
@@ -15,4 +15,4 @@ protected:
 
 } // namespace ring::test
 
-#endif // !__RING_TESTS_FIXTURES_TEST_HELPERS_H__
+#endif // !RING_TESTS_FIXTURES_TEST_HELPERS_H__

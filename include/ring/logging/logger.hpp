@@ -1,5 +1,5 @@
-#ifndef __RING_LOGGING_LOGGER_HPP__
-#define __RING_LOGGING_LOGGER_HPP__
+#ifndef RING_LOGGING_LOGGER_HPP_
+#define RING_LOGGING_LOGGER_HPP_
 
 #include <format>
 #include <memory>
@@ -49,6 +49,7 @@ public:
         static log_service instance;
         return instance;
     }
+public:
     void initialize();
     void shutdown();
     std::shared_ptr<logger> create_logger(const logger_config& config);
@@ -57,7 +58,7 @@ public:
     void flush_all();
 public:
     class impl;
-    std::unique_ptr<impl> _impl;
+    std::unique_ptr<impl> impl_;
 };
 
 class RING_API logger final
@@ -116,7 +117,7 @@ public:
     }
 private:
     class impl;
-    std::unique_ptr<impl> _impl;
+    std::unique_ptr<impl> impl_;
 };
 
 template <typename... Args>
@@ -159,4 +160,4 @@ void critical(std::format_string<Args...> fmt, Args&&... args)
 #define RING_ERROR(...)     ring::logging::error(__VA_ARGS__)
 #define RING_CRITICAL(...)  ring::logging::critical(__VA_ARGS__)
 
-#endif // !__RING_LOGGING_LOGGER_HPP__
+#endif // !RING_LOGGING_LOGGER_HPP_

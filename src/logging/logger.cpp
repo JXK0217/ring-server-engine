@@ -64,79 +64,77 @@ public:
 public:
     void initialize()
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
 
         spdlog::drop_all();
         spdlog::flush_on(spdlog::level::warn);
         spdlog::flush_every(std::chrono::seconds(3));
 
-        auto logger = __create_logger({ .name = "", .pattern = "[%Y-%m-%d %H:%M:%S.%e] [%l] [thread %t] %v" });
-        _default_logger = logger;
+        auto logger = create_logger_impl({ .name = "", .pattern = "[%Y-%m-%d %H:%M:%S.%e] [%l] [thread %t] %v" });
+        default_logger_ = logger;
     }
     void shutdown()
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
 
-        _loggers.clear();
-        _default_logger.reset();
+        loggers_.clear();
+        default_logger_.reset();
         spdlog::shutdown();
     }
     std::shared_ptr<logger> create_logger(const logger_config& config)
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
 
-        auto it = _loggers.find(config.name);
-        if (it != _loggers.end())
+        auto it = loggers_.find(config.name);
+        if (it != loggers_.end())
         {
             throw ring::core::exception("Logger with name '" + config.name + "' already exists.");
         }
-        return __create_logger(config);
+        return create_logger_impl(config);
     }
     void set_default_logger(std::shared_ptr<logger> logger)
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
 
-        _default_logger = logger;
+        default_logger_ = logger;
     }
     std::shared_ptr<logger> get_default_logger()
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
 
-        return _default_logger;
+        return default_logger_;
     }
     std::shared_ptr<logger> get_logger(std::string_view name)
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
         
-        auto it = _loggers.find(name.data());
-        if (it != _loggers.end())
+        auto it = loggers_.find(name.data());
+        if (it != loggers_.end())
         {
             return it->second;
         }
-        auto logger = __create_logger({ .name = name.data() });
+        auto logger = create_logger_impl({ .name = name.data() });
         return logger;
     }
     void flush_all()
     {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(mutex_);
         
-        for (auto& [_, logger] : _loggers)
+        for (auto& [_, logger] : loggers_)
         {
             logger->flush();
         }
     }
 private:
-    std::shared_ptr<logger> __create_logger(const logger_config& config)
+    std::shared_ptr<logger> create_logger_impl(const logger_config& config)
     {
         std::vector<spdlog::sink_ptr> sinks;
-        
         if (config.console)
         {
             auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             console_sink->set_pattern(config.pattern);
             sinks.push_back(console_sink);
         }
-        
         if (!config.file.empty())
         {
             auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
@@ -144,13 +142,12 @@ private:
             file_sink->set_pattern(config.pattern);
             sinks.push_back(file_sink);
         }
-
         std::shared_ptr<spdlog::logger> spd_logger;
         if (config.async)
         {
             if (!spdlog::thread_pool())
             {
-                spdlog::init_thread_pool(_service_config.queue_size, 1);
+                spdlog::init_thread_pool(service_config_.queue_size, 1);
             }
 
             spd_logger = std::make_shared<spdlog::async_logger>(
@@ -165,7 +162,7 @@ private:
         spdlog::register_logger(spd_logger);
 
         auto logger = std::make_shared<ring::logging::logger>(spd_logger->name());
-        _loggers[config.name] = logger;
+        loggers_[config.name] = logger;
         return logger;
     }
 private:
@@ -184,131 +181,131 @@ private:
         }
     };
 private:
-    std::mutex _mutex;
-    log_service_config _service_config;
-    std::unordered_map<std::string, std::shared_ptr<logger>, string_hash, string_equal> _loggers;
-    std::shared_ptr<logger> _default_logger;
+    std::mutex mutex_;
+    log_service_config service_config_;
+    std::unordered_map<std::string, std::shared_ptr<logger>, string_hash, string_equal> loggers_;
+    std::shared_ptr<logger> default_logger_;
 };
 
 log_service::log_service() :
-    _impl(std::make_unique<impl>()) {}
+    impl_(std::make_unique<impl>()) {}
 
 log_service::~log_service() {}
 
 void log_service::initialize()
 {
-    _impl->initialize();
+    impl_->initialize();
 }
 
 void log_service::shutdown()
 {
-    _impl->shutdown();
+    impl_->shutdown();
 }
 
 std::shared_ptr<logger> log_service::create_logger(const logger_config& config)
 {
-    return _impl->create_logger(config);
+    return impl_->create_logger(config);
 }
 
 std::shared_ptr<logger> log_service::get_default_logger()
 {
-    return _impl->get_default_logger();
+    return impl_->get_default_logger();
 }
 
 std::shared_ptr<logger> log_service::get_logger(std::string_view name)
 {
-    return _impl->get_logger(name);
+    return impl_->get_logger(name);
 }
 
 void log_service::flush_all()
 {
-    _impl->flush_all();
+    impl_->flush_all();
 }
 
 class logger::impl final
 {
 public:
     impl(const std::string& name) :
-        _name(name)
+        name_(name)
     {
-        auto spd_logger = spdlog::get(_name);
+        auto spd_logger = spdlog::get(name_);
         if (!spd_logger)
         {
-            throw ring::core::exception("spdlog logger with name '" + _name + "' does not exist.");
+            throw ring::core::exception("spdlog logger with name '" + name_ + "' does not exist.");
         }
-        _spd_logger = spd_logger;
+        spd_logger_ = spd_logger;
     }
     ~impl()
     {
-        if (_spd_logger)
+        if (spd_logger_)
         {
-            spdlog::drop(_spd_logger->name());
+            spdlog::drop(spd_logger_->name());
         }
     }
 public:
     bool should_log(log_level level) const
     {
-        return _spd_logger->should_log(to_spdlog_level(level));
+        return spd_logger_->should_log(to_spdlog_level(level));
     }
     void set_level(log_level level)
     {
-        _spd_logger->set_level(to_spdlog_level(level));
+        spd_logger_->set_level(to_spdlog_level(level));
     }
     log_level level() const
     {
-        return from_spdlog_level(_spd_logger->level());
+        return from_spdlog_level(spd_logger_->level());
     }
     const std::string& name() const
     {
-        return _name;
+        return name_;
     }
     void flush()
     {
-        _spd_logger->flush();
+        spd_logger_->flush();
     }
 public:
     void log(log_level level, const std::string& str)
     {
-        _spd_logger->log(to_spdlog_level(level), str);
+        spd_logger_->log(to_spdlog_level(level), str);
     }
 private:
-    std::string _name;
-    std::shared_ptr<spdlog::logger> _spd_logger;
+    std::string name_;
+    std::shared_ptr<spdlog::logger> spd_logger_;
 };
 
 logger::logger(const std::string &name) :
-    _impl(std::make_unique<impl>(name)) {}
+    impl_(std::make_unique<impl>(name)) {}
 
 logger::~logger() {}
 
 bool logger::should_log(log_level level) const
 {
-    return _impl->should_log(level);
+    return impl_->should_log(level);
 }
 
 void logger::set_level(log_level level)
 {
-    _impl->set_level(level);
+    impl_->set_level(level);
 }
 
 log_level logger::level() const
 {
-    return _impl->level();
+    return impl_->level();
 }
 
 const std::string& logger::name() const
 {
-    return _impl->name();
+    return impl_->name();
 }
 
 void logger::flush()
 {
-    _impl->flush();
+    impl_->flush();
 }
 
 void logger::log(log_level level, const std::string& str)
 {
-    _impl->log(level, str);
+    impl_->log(level, str);
 }
 
 } // namespace ring::logging

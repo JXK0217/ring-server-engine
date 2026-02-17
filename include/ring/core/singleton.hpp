@@ -1,5 +1,5 @@
-#ifndef __RING_CORE_SINGLETON_HPP__
-#define __RING_CORE_SINGLETON_HPP__
+#ifndef RING_CORE_SINGLETON_HPP_
+#define RING_CORE_SINGLETON_HPP_
 
 namespace ring::core
 {
@@ -24,4 +24,4 @@ public:
 
 } // namespace ring::core
 
-#endif // !__RING_CORE_SINGLETON_HPP__
+#endif // !RING_CORE_SINGLETON_HPP_

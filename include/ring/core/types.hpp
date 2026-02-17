@@ -1,5 +1,5 @@
-#ifndef __RING_CORE_TYPES_HPP__
-#define __RING_CORE_TYPES_HPP__
+#ifndef RING_CORE_TYPES_HPP_
+#define RING_CORE_TYPES_HPP_
 
 #include <cstdint>
 
@@ -44,4 +44,4 @@ using uint64    = std::uint64_t;
     using uint64    = ring::core::uint64;
 #endif
 
-#endif // !__RING_CORE_TYPES_HPP__
+#endif // !RING_CORE_TYPES_HPP_

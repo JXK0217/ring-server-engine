@@ -1,5 +1,5 @@
-#ifndef __RING_CORE_INITIALIZER_REGISTRY_HPP__
-#define __RING_CORE_INITIALIZER_REGISTRY_HPP__
+#ifndef RING_CORE_INITIALIZER_REGISTRY_HPP_
+#define RING_CORE_INITIALIZER_REGISTRY_HPP_
 
 #include <algorithm>
 #include <functional>
@@ -40,33 +40,33 @@ public:
 public:
     void register_entry(std::string name, handle initialize, handle shutdown, int priority = 0)
     {
-        _entries.emplace_back(std::move(name), std::move(initialize), std::move(shutdown), priority);
+        entries_.emplace_back(std::move(name), std::move(initialize), std::move(shutdown), priority);
     }
 public:
     void initialize()
     {
-        if (_initialized)
+        if (initialized_)
         {
-            throw ring::core::exception("_initialized");
+            throw ring::core::exception("already initialized");
         }
-        std::sort(_entries.begin(), _entries.end(), 
+        std::sort(entries_.begin(), entries_.end(), 
             [](const auto& l, const auto& r){ return l.priority < r.priority; });
-        for (auto& entry: _entries)
+        for (auto& entry: entries_)
         {
             if (entry.initialize)
             {
                 entry.initialize();
             }
         }
-        _initialized = true;
+        initialized_ = true;
     }
     void shutdown()
     {
-        if (!_initialized)
+        if (!initialized_)
         {
-            throw ring::core::exception("!_initialized");
+            throw ring::core::exception("not initialized");
         }
-        for (auto& entry: _entries | std::views::reverse)
+        for (auto& entry: entries_ | std::views::reverse)
         {
             if (entry.shutdown)
             {
@@ -75,10 +75,10 @@ public:
         }
     }
 private:
-    std::vector<entry> _entries;
-    bool _initialized = false;
+    std::vector<entry> entries_;
+    bool initialized_ = false;
 };
 
 } // namespace ring::core
 
-#endif // !__RING_CORE_INITIALIZER_REGISTRY_HPP__
+#endif // !RING_CORE_INITIALIZER_REGISTRY_HPP_

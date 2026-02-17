@@ -1,5 +1,5 @@
-#ifndef __RING_CORE_EXCEPTION_HPP__
-#define __RING_CORE_EXCEPTION_HPP__
+#ifndef RING_CORE_EXCEPTION_HPP_
+#define RING_CORE_EXCEPTION_HPP_
 
 #include <exception>
 #include <format>
@@ -14,16 +14,16 @@ class exception: public std::exception
 {
 public:
     explicit exception(std::string_view message, std::source_location location = std::source_location::current())
-        : _message(message)
-        , _location(location) {}
+        : message_(message)
+        , location_(location) {}
 public:
     const char* what() const noexcept override
     {
-        return _message.c_str();
+        return message_.c_str();
     }
     const auto& location() const noexcept
     {
-        return _location;
+        return location_;
     }
 public:
     virtual std::string_view type() const noexcept
@@ -32,13 +32,13 @@ public:
     }
     virtual std::string detail() const
     {
-        return std::format("{}:{} [{}]: {}", _location.file_name(), _location.line(), type(), _message);
+        return std::format("{}:{} [{}]: {}", location_.file_name(), location_.line(), type(), message_);
     }
 private:
-    std::string _message;
-    std::source_location _location;
+    std::string message_;
+    std::source_location location_;
 };
 
 } // namespace ring::core
 
-#endif // !__RING_CORE_EXCEPTION_HPP__
+#endif // !RING_CORE_EXCEPTION_HPP_

@@ -1,5 +1,5 @@
-#ifndef __RING_PCH_HPP__
-#define __RING_PCH_HPP__
+#ifndef RING_PCH_HPP_
+#define RING_PCH_HPP_
 
 #include <algorithm>
 #include <any>
@@ -50,4 +50,4 @@
 #include "ring/core/types.hpp"
 #include "ring/logging/logger.hpp"
 
-#endif // !__RING_PCH_HPP__
+#endif // !RING_PCH_HPP_
