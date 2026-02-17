@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <thread>
+#include <array>
 
 #include "test_helpers.hpp"
 
