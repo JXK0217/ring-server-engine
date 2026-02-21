@@ -47,7 +47,6 @@
 #include <variant>
 #include <vector>
 
-#include "ring/core/types.hpp"
 #include "ring/logging/logger.hpp"
 
 #endif // !RING_PCH_HPP_
