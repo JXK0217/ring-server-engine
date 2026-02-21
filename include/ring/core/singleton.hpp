@@ -24,4 +24,4 @@ public:
 
 } // namespace ring::core
 
-#endif // !RING_CORE_SINGLETON_HPP_
+#endif // RING_CORE_SINGLETON_HPP_

@@ -49,4 +49,4 @@
 
 #include "ring/logging/logger.hpp"
 
-#endif // !RING_PCH_HPP_
+#endif // RING_PCH_HPP_

@@ -15,4 +15,4 @@
     #endif
 #endif
 
-#endif // !RING_CORE_EXPORT_HPP_
+#endif // RING_CORE_EXPORT_HPP_

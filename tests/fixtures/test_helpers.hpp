@@ -15,4 +15,4 @@ protected:
 
 } // namespace ring::test
 
-#endif // !RING_TESTS_FIXTURES_TEST_HELPERS_H__
+#endif // RING_TESTS_FIXTURES_TEST_HELPERS_H__

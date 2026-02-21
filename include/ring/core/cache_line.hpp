@@ -65,4 +65,4 @@ using buffer_aligned = std::unique_ptr<char[], detail::aligned_deleter>;
 
 } // namespace ring::core
 
-#endif // !RING_CORE_CACHE_LINE_HPP_
+#endif // RING_CORE_CACHE_LINE_HPP_

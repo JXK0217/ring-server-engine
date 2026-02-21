@@ -81,4 +81,4 @@ private:
 
 } // namespace ring::core
 
-#endif // !RING_CORE_INITIALIZER_REGISTRY_HPP_
+#endif // RING_CORE_INITIALIZER_REGISTRY_HPP_

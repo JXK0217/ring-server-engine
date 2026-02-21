@@ -41,4 +41,4 @@ private:
 
 } // namespace ring::core
 
-#endif // !RING_CORE_EXCEPTION_HPP_
+#endif // RING_CORE_EXCEPTION_HPP_

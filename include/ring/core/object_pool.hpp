@@ -184,4 +184,4 @@ private:
 
 } // namespace ring::core
 
-#endif // !RING_CORE_OBJECT_POOL_HPP_
+#endif // RING_CORE_OBJECT_POOL_HPP_

@@ -538,4 +538,4 @@ using mpmc_queue = lockfree_queue<T, detail::mpmc_queue>;
 
 } // namespace ring::core
 
-#endif // !RING_LOCKFREE_QUEUE_HPP_
+#endif // RING_LOCKFREE_QUEUE_HPP_

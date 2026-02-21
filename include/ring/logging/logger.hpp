@@ -160,4 +160,4 @@ void critical(std::format_string<Args...> fmt, Args&&... args)
 #define RING_ERROR(...)     ring::logging::error(__VA_ARGS__)
 #define RING_CRITICAL(...)  ring::logging::critical(__VA_ARGS__)
 
-#endif // !RING_LOGGING_LOGGER_HPP_
+#endif // RING_LOGGING_LOGGER_HPP_
