@@ -2,8 +2,8 @@ message(STATUS "Collecting network module")
 
 # set network module sources
 file(GLOB_RECURSE NETWORK_SOURCES
-    *.cpp
-    *.c
+    ${NETWORK_BACKEND}/*.cpp
+    ${NETWORK_BACKEND}/*.c
 )
 
 # add network module to enabled modules

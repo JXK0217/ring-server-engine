@@ -46,7 +46,7 @@ foreach(MODULE ${RING_MODULES})
     target_sources(ring-server PRIVATE ${${MODULE}_SOURCES})
 
     if(RING_VERBOSE)
-        message(STATUS "All ${MODULE} files:")
+        message(STATUS "All include dir: ${${MODULE}_INCLUDE_DIR}")
         foreach(SRC ${${MODULE}_SOURCES})
             message(STATUS "  ${SRC}")
         endforeach()

@@ -1,7 +1,9 @@
 # third_party/CMakeLists.txt - CMake configuration for third-party dependencies
 
 # include dependencies
-include(../cmake/dependencies/asio)
+if(NETWORK_BACKEND STREQUAL "asio")
+    include(../cmake/dependencies/asio)
+endif()
 include(../cmake/dependencies/spdlog)
 
 if(BUILD_TESTS)

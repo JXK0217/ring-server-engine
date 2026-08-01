@@ -16,8 +16,13 @@ option(BUILD_NETWORK_MODULE "Build network module" ON)
 option(ENABLE_ASAN "Enable Asan" ON)
 option(ENABLE_REDIS "Enable Redis support" ON)
 
+# network backend
+set(NETWORK_BACKEND "asio" CACHE STRING "Network backend: asio")
+
 # third-party library options
-option(USE_ASIO_STANDALONE "Use standalone ASIO" ON)
+if(NETWORK_BACKEND STREQUAL "asio")
+    option(USE_ASIO_STANDALONE "Use standalone ASIO" ON)
+endif()
 option(USE_SYSTEM_SPDLOG "Use system-installed spdlog" OFF)
 
 # initialize module sources
