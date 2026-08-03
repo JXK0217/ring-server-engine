@@ -20,6 +20,8 @@ public:
 public:
     std::unique_ptr<tcp_listener> create_tcp_listener(const endpoint& ep);
     std::unique_ptr<tcp_connector> create_tcp_connector(const endpoint& ep);
+    std::unique_ptr<udp_socket> create_udp_socket();
+    std::unique_ptr<timer> create_timer();
 private:
     asio::io_context ctx_;
     asio::executor_work_guard<asio::io_context::executor_type> work_guard_;

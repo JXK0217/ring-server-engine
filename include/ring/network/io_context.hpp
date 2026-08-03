@@ -12,6 +12,8 @@ namespace ring::network
 
 class tcp_listener;
 class tcp_connector;
+class udp_socket;
+class timer;
 
 class RING_API io_context
 {
@@ -27,6 +29,8 @@ public:
 public:
     virtual std::unique_ptr<tcp_listener> create_tcp_listener(const endpoint& ep) = 0;
     virtual std::unique_ptr<tcp_connector> create_tcp_connector(const endpoint& ep) = 0;
+    virtual std::unique_ptr<udp_socket> create_udp_socket() = 0;
+    virtual std::unique_ptr<timer> create_timer() = 0;
 };
 
 } // namespace ring::network

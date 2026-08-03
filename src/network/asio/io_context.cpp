@@ -2,8 +2,10 @@
 
 #include <asio/post.hpp>
 
-#include "tcp_listener.hpp"
 #include "tcp_connector.hpp"
+#include "tcp_listener.hpp"
+#include "timer.hpp"
+#include "udp_socket.hpp"
 
 namespace ring::network
 {
@@ -35,6 +37,16 @@ std::unique_ptr<tcp_listener> asio_io_context::create_tcp_listener(const endpoin
 std::unique_ptr<tcp_connector> asio_io_context::create_tcp_connector(const endpoint& ep)
 {
     return std::make_unique<asio_tcp_connector>(ctx_, ep);
+}
+
+std::unique_ptr<udp_socket> asio_io_context::create_udp_socket()
+{
+    return std::make_unique<asio_udp_socket>(ctx_);
+}
+
+std::unique_ptr<timer> asio_io_context::create_timer()
+{
+    return std::make_unique<asio_timer>(ctx_);
 }
 
 std::unique_ptr<io_context> io_context::create()
