@@ -23,6 +23,7 @@ set(NETWORK_BACKEND "asio" CACHE STRING "Network backend: asio")
 if(NETWORK_BACKEND STREQUAL "asio")
     option(USE_ASIO_STANDALONE "Use standalone ASIO" ON)
 endif()
+option(USE_SYSTEM_PROTOBUF "Use system-installed protobuf" OFF)
 option(USE_SYSTEM_SPDLOG "Use system-installed spdlog" OFF)
 
 # initialize module sources

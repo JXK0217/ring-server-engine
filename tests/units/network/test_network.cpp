@@ -8,6 +8,7 @@
 #include "ring/network/tcp_connection.hpp"
 #include "ring/network/tcp_connector.hpp"
 #include "ring/network/tcp_listener.hpp"
+#include "ring/network/tcp_server.hpp"
 #include "ring/network/timer.hpp"
 #include "ring/network/udp_socket.hpp"
 
@@ -88,7 +89,7 @@ TEST_F(NetworkTest, Timer)
     ctx->run();
 }
 
-TEST_F(NetworkTest, UDP)
+TEST_F(NetworkTest, Udp)
 {
     auto ctx = io_context::create();
 
@@ -124,6 +125,38 @@ TEST_F(NetworkTest, UDP)
                 std::cout << "Client sent " << n << " bytes." << std::endl;
             }
         });
+
+    ctx->run();
+}
+
+auto make_session(io_context& ctx, std::unique_ptr<tcp_connection> conn)
+{
+    auto pktzr = std::make_unique<framed_packetizer<length_prefix_frame>>();
+    auto codec = std::make_unique<protobuf_codec>();
+    auto s = std::make_shared<session>(ctx, std::move(conn), std::move(pktzr), std::move(codec));
+    s->set_message_handler(
+        [](auto, uint32_t msg_id, auto)
+        {
+            std::cout << "Received msg id: " << msg_id << std::endl;
+        });
+    s->set_error_handler(
+        [](auto, error_code ec)
+        {
+            std::cerr << "Session error: " << ec.message() << std::endl;
+        });
+    return s;
+}
+
+TEST_F(NetworkTest, TcpServer)
+{
+    auto ctx = io_context::create();
+
+    tcp_server server(*ctx, {"0.0.0.0", 8080},
+        [&](auto conn)
+        {
+            return make_session(*ctx, std::move(conn));
+        });
+    server.start();
 
     ctx->run();
 }

@@ -9,6 +9,7 @@ if(BUILD_LOGGING_MODULE)
         PRIVATE
             ring-server
             gmock
+            compiler_flags
     )
 
     add_test(NAME test_logging COMMAND test_logging)

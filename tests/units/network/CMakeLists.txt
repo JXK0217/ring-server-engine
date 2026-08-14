@@ -9,6 +9,7 @@ if(BUILD_NETWORK_MODULE)
         PRIVATE
             ring-server
             gmock
+            compiler_flags
     )
 
     add_test(NAME test_network COMMAND test_network)

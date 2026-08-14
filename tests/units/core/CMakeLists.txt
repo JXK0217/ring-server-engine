@@ -9,6 +9,7 @@ if(BUILD_CORE_MODULE)
         PRIVATE
             ring-server
             gmock
+            compiler_flags
     )
 
     add_test(NAME test_core COMMAND test_core)

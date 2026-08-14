@@ -4,6 +4,7 @@
 if(NETWORK_BACKEND STREQUAL "asio")
     include(../cmake/dependencies/asio)
 endif()
+include(../cmake/dependencies/protobuf)
 include(../cmake/dependencies/spdlog)
 
 if(BUILD_TESTS)
