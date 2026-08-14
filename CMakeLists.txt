@@ -72,11 +72,11 @@ set_target_properties(ring-server PROPERTIES
     OUTPUT_NAME "ring-server"
 )
 
-target_compile_options(ring-server PRIVATE ${COMPILER_WARNINGS})
-
 # link dependencies
 target_link_libraries(ring-server 
-    PRIVATE 
+    PRIVATE
+        compiler_flags
+    PUBLIC
         $<BUILD_INTERFACE:${RING_DEPENDENCIES}>
 )
 

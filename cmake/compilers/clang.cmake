@@ -2,23 +2,23 @@
 
 message(STATUS "Configuring for Clang compiler")
 
+add_library(compiler_flags INTERFACE)
+
 # set custom macros
 set(RING_COMPILER_CLANG ON)
 add_definitions(-DRING_COMPILER_CLANG)
 
 # add Clang specific compiler flags
-add_compile_options(-Wall -Wextra -Werror)  # Enable all warnings and treat them as errors
-add_compile_options(-Wpedantic)  # Enable warnings for unused parameters
+target_compile_options(compiler_flags INTERFACE -Wall -Wextra -Werror)  # Enable all warnings and treat them as errors
+target_compile_options(compiler_flags INTERFACE -Wpedantic)  # Enable warnings for unused parameters
 
-# add fpic option for shared libraries
 if(BUILD_SHARED_LIBS)
-    add_compile_options(-fPIC)  # Position-independent code for shared libraries
-endif()
+    # add fpic option for shared libraries
+    target_compile_options(compiler_flags INTERFACE -fPIC)  # Position-independent code for shared libraries
 
-# Set compiler visibility settings (for shared libraries)
-if(BUILD_SHARED_LIBS)
-    add_compile_options(-fvisibility=hidden)
-    add_compile_options(-fvisibility-inlines-hidden)
+    # Set compiler visibility settings (for shared libraries)
+    target_compile_options(compiler_flags INTERFACE -fvisibility=hidden)
+    target_compile_options(compiler_flags INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 endif()
 
 # set default compiler and linker flags
@@ -39,6 +39,6 @@ else()
 endif()
 
 if(ENABLE_ASAN)
-    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-    add_link_options(-fsanitize=address)
+    target_compile_options(compiler_flags INTERFACE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(compiler_flags INTERFACE -fsanitize=address)
 endif()

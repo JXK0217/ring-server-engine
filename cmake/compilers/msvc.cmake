@@ -2,14 +2,16 @@
 
 message(STATUS "Configuring for MSVC compiler")
 
+add_library(compiler_flags INTERFACE)
+
 # set custom macros
 set(RING_COMPILER_MSVC ON)
 add_definitions(-DRING_COMPILER_MSVC)
 
 # add MSVC specific compiler flags
-add_compile_options(/W4 /WX)  # Enable warnings and treat them as errors
-add_compile_options(/MP)  # Enable multi-processor compilation
-add_compile_options(/wd4251)
+target_compile_options(compiler_flags INTERFACE /W4 /WX)  # Enable warnings and treat them as errors
+target_compile_options(compiler_flags INTERFACE /MP)  # Enable multi-processor compilation
+target_compile_options(compiler_flags INTERFACE /wd4251)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)  # Disable secure warnings
 add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)  # Disable deprecated warnings for Winsock
@@ -39,6 +41,6 @@ else()
 endif()
 
 if(HAS_DEBUG_SYMBOLS AND ENABLE_ASAN)
-    add_compile_options(/fsanitize=address)
-    add_link_options(/fsanitize=address)
+    target_compile_options(compiler_flags INTERFACE /fsanitize=address)
+    target_link_options(compiler_flags INTERFACE /fsanitize=address)
 endif()
