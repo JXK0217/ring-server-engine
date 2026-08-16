@@ -39,7 +39,6 @@ public:
         std::vector<payload> frames;
         while (true)
         {
-            constexpr size_t head_len = sizeof(uint32_t);
             if (buffer_.readable_bytes() < head_len)
             {
                 break;
