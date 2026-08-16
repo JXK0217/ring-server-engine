@@ -38,7 +38,6 @@ protected:
 
 TEST_F(NetworkTest, Listen)
 {
-    return;
     auto ctx = io_context::create();
 
     auto listener = ctx->create_tcp_listener({ "0.0.0.0", 8080 });
@@ -56,7 +55,6 @@ TEST_F(NetworkTest, Listen)
 
 TEST_F(NetworkTest, Connect)
 {
-    return;
     auto ctx = io_context::create();
 
     auto connector = ctx->create_tcp_connector({ "127.0.0.1", 8080 });
@@ -74,7 +72,6 @@ TEST_F(NetworkTest, Connect)
 
 TEST_F(NetworkTest, Timer)
 {
-    return;
     auto ctx = io_context::create();
 
     using namespace std::chrono_literals;
@@ -95,7 +92,6 @@ TEST_F(NetworkTest, Timer)
 
 TEST_F(NetworkTest, Udp)
 {
-    return;
     auto ctx = io_context::create();
 
     auto server_socket = ctx->create_udp_socket();
