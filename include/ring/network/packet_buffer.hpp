@@ -13,55 +13,44 @@ class packet_buffer final
 {
 public:
     static constexpr size_t init_size = 0x1000;
-    static constexpr size_t max_size = 0x4000000;
+    static constexpr size_t max_size = 0x40000;
 public:
     packet_buffer() = default;
     ~packet_buffer() = default;
 public:
-    bool try_write(const_buffer src)
+    size_t try_read(mutable_buffer dst)
     {
-        if (src.size() == 0)
-        {
-            return true;
-        }
+        return read(dst);
+    }
+    size_t try_write(const_buffer src)
+    {
         if (!try_resize(src.size()))
         {
-            return false;
+            return 0;
         }
-        write(src);
-        return true;
+        return write(src);
     }
-    size_t read(size_t len)
+    void commit_read(size_t len)
     {
-        auto readable = std::min(readable_bytes(), len);
-        read_index_ = (read_index_ + len) % data_.size();
-        if (read_index_ == write_index_)
-        {
-            read_index_ = 0;
-            write_index_ = 0;
-        }
-        return readable;
+        read(len);
+    }
+    void commit_write(size_t len)
+    {
+        write(len);
     }
     void reset()
     {
+        data_.resize(init_size);
         read_index_ = 0;
         write_index_ = 0;
     }
     size_t readable_bytes() const
     {
-        if (write_index_ < read_index_)
-        {
-            return data_.size() - read_index_ + write_index_;
-        }
         return write_index_ - read_index_;
     }
     size_t writable_bytes() const
     {
-        if (write_index_ < read_index_)
-        {
-            return read_index_ - write_index_;
-        }
-        return data_.size() - write_index_ + read_index_;
+        return data_.size() - write_index_;
     }
     const std::byte* read_begin() const
     {
@@ -72,15 +61,32 @@ public:
         return data_.data() + write_index_;
     }
 private:
-    void write(const_buffer src)
+    size_t read(mutable_buffer dst)
     {
-        auto first = std::min(src.size(), data_.size() - write_index_);
-        std::memcpy(data_.data() + write_index_, src.data(), first);
-        if (first < src.size())
+        auto readable = std::min(readable_bytes(), dst.size());
+        std::memcpy(dst.data(), read_begin(), readable);
+        read(readable);
+        return readable;
+    }
+    size_t write(const_buffer src)
+    {
+        auto writable = std::min(writable_bytes(), src.size());
+        std::memcpy(write_begin(), src.data(), writable);
+        write(writable);
+        return writable;
+    }
+    void read(size_t len)
+    {
+        read_index_ += len;
+        if (read_index_ == write_index_)
         {
-            std::memcpy(data_.data(), src.data() + first, src.size() - first);
+            read_index_ = 0;
+            write_index_ = 0;
         }
-        write_index_ = (write_index_ + src.size()) % data_.size();
+    }
+    void write(size_t len)
+    {
+        write_index_ += len;
     }
     bool try_resize(size_t len)
     {

@@ -11,8 +11,6 @@
 namespace ring::network
 {
 
-// using connect_callback  = std::function<void(error_code)>;
-
 class RING_API tcp_connection
 {
 public:

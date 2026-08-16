@@ -5,6 +5,7 @@
 #include <string>
 
 #include "ring/core/export.hpp"
+#include "ring/core/format.hpp"
 
 namespace ring::network
 {
@@ -12,7 +13,12 @@ namespace ring::network
 struct RING_API endpoint final
 {
     std::string address;
-    uint16_t    port = 0;    
+    uint16_t port = 0;
+
+    std::string to_string() const
+    {
+        return std::format("{}:{}", address, port);
+    }
 };
     
 } // namespace ring::network
