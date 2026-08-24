@@ -1,11 +1,13 @@
 #ifndef RING_NETWORK_SESSION_HPP_
 #define RING_NETWORK_SESSION_HPP_
 
+#include <deque>
 #include <functional>
 #include <memory>
 
 #include "ring/core/export.hpp"
 #include "ring/network/error_code.hpp"
+#include "ring/network/executor.hpp"
 #include "ring/network/packet_framer.hpp"
 #include "ring/network/session_id_generator.hpp"
 #include "ring/network/tcp_connection.hpp"
@@ -16,12 +18,20 @@ namespace ring::network
 
 class RING_API session : public std::enable_shared_from_this<session>
 {
+private:
+    enum class state
+    {
+        idle,
+        running,
+        stopped,
+    };
 public:
     using close_handler = std::function<void(std::shared_ptr<session>)>;
 public:
     explicit session(io_context& ctx, std::unique_ptr<tcp_connection> conn) :
-        ctx_(ctx), conn_(std::move(conn)), id_(session_id_generator::instance().next_id()) {}
-    virtual ~session() = default;
+        ctx_(ctx), ex_(ctx_.create_strand()),
+        conn_(std::move(conn)), id_(session_id_generator::instance().next_id()) {}
+    ~session() = default;
 public:
     virtual void on_start() {}
     virtual void on_message(payload) {}
@@ -30,29 +40,41 @@ public:
 public:
     void start()
     {
-        on_start();
-
-        do_read();
+        ex_->post(
+            [this, self = shared_from_this()]
+            {
+                do_start();
+            });
     }
-    void send(const_buffer frame)
+    void send(payload frame)
     {
-        // TODO use a buffer pool to avoid frequent allocations
-        auto frame_data = std::make_shared<std::vector<std::byte>>(framer_.pack(frame));
-        auto span = const_buffer(frame_data->data(), frame_data->size());
-        conn_->async_write(span, [frame_data](error_code, std::size_t) {});
+        ex_->dispatch(
+            [this, self = shared_from_this(), frame = std::move(frame)]
+            {
+                if (state_ != state::running)
+                {
+                    return;
+                }
+
+                write_queue_.emplace_back(framer_.pack({ frame.begin(), frame.end() }));
+                if (!writing_)
+                {
+                    writing_ = true;
+                    do_write();
+                }
+            });
     }
     void close()
     {
-        conn_->close();
-        on_close();
-        if (close_handler_)
-        {
-            close_handler_(shared_from_this());
-        }
+        ex_->dispatch(
+            [this, self = shared_from_this()]
+            {
+                do_close();
+            });
     }
     void set_close_handler(close_handler handler)
     {
-        close_handler_ = std::move(handler);
+        on_close_ = std::move(handler);
     }
 public:
     uint64_t id() const
@@ -60,20 +82,40 @@ public:
         return id_;
     }
 private:
+    void do_start()
+    {
+        if (state_ != state::idle)
+        {
+            return;
+        }
+        
+        state_ = state::running;
+        on_start();
+        do_read();
+    }
     void do_read()
     {
+        if (state_ != state::running)
+        {
+            return;
+        }
+
         conn_->async_read_some(framer_.write_buffer(),
-            [self = shared_from_this()](error_code ec, std::size_t n)
+            [this, self = shared_from_this()](error_code ec, std::size_t n)
             {
-                self->on_read(ec, n);
+                on_read(ec, n);
             });
     }
     void on_read(error_code ec, std::size_t n)
     {
+        if (state_ != state::running)
+        {
+            return;
+        }
         if (ec)
         {
             on_error(ec);
-            close();
+            do_close();
             return;
         }
 
@@ -86,12 +128,66 @@ private:
 
         do_read();
     }
+    void do_write()
+    {
+        if (write_queue_.empty())
+        {
+            return;
+        }
+
+        auto buf = std::move(write_queue_.front());
+        write_queue_.pop_front();
+        auto span = const_buffer(buf.data(), buf.size());
+        conn_->async_write(span,
+            [this, self = shared_from_this(), buf = std::move(buf)](error_code ec, std::size_t)
+            {
+                writing_ = false;
+                if (state_ != state::running)
+                {
+                    return;
+                }
+                if (ec)
+                {
+                    on_error(ec);
+                    do_close();
+                    return;
+                }
+
+                if (!write_queue_.empty())
+                {
+                    writing_ = true;
+                    do_write();
+                }
+            });
+    }
+    void do_close()
+    {
+        if (state_ != state::running)
+        {
+            return;
+        }
+        
+        state_ = state::stopped;
+        write_queue_.clear();
+        writing_ = false;
+        conn_->close();
+
+        on_close();
+        if (on_close_)
+        {
+            on_close_(shared_from_this());
+        }
+    }
 private:
     io_context& ctx_;
+    std::unique_ptr<executor> ex_;
     std::unique_ptr<tcp_connection> conn_;
     uint64_t id_;
+    std::deque<payload> write_queue_;
+    bool writing_ = false;
     packet_framer framer_;
-    close_handler close_handler_;
+    close_handler on_close_;
+    state state_ = state::idle;
 };
 
 } // namespace ring::network

@@ -12,13 +12,15 @@ class asio_tcp_connection final : public tcp_connection
 {
 public:
     explicit asio_tcp_connection(asio::ip::tcp::socket socket);
-    ~asio_tcp_connection() = default;
+    ~asio_tcp_connection();
 public:
     void async_read_some(mutable_buffer buf, read_handler handler) override;
     void async_write(const_buffer buf, write_handler handler) override;
     void close() override;
     endpoint local_endpoint() const override;
     endpoint remote_endpoint() const override;
+private:
+    void do_close();
 private:
     asio::ip::tcp::socket socket_;
 };

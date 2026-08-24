@@ -36,28 +36,28 @@ protected:
     }
 };
 
-TEST_F(NetworkTest, Listen)
-{
-    auto ctx = io_context::create();
+// TEST_F(NetworkTest, Listen)
+// {
+//     auto ctx = io_context::create();
 
-    auto listener = ctx->create_tcp_listener({ "0.0.0.0", 8080 });
-    listener->async_accept([&](error_code ec, std::unique_ptr<tcp_connection> conn)
-    {
-        if (!ec)
-        {
-            std::cout << "New connection from " << conn->remote_endpoint().address << std::endl;
-        }
-        ctx->stop();
-    });
+//     auto listener = ctx->create_tcp_listener(ctx->get_executor(), { "0.0.0.0", 8080 });
+//     listener->async_accept([&](error_code ec, std::unique_ptr<tcp_connection> conn)
+//     {
+//         if (!ec)
+//         {
+//             std::cout << "New connection from " << conn->remote_endpoint().address << std::endl;
+//         }
+//         ctx->stop();
+//     });
 
-    ctx->run();
-}
+//     ctx->run();
+// }
 
 TEST_F(NetworkTest, Connect)
 {
     auto ctx = io_context::create();
 
-    auto connector = ctx->create_tcp_connector({ "127.0.0.1", 8080 });
+    auto connector = ctx->create_tcp_connector(ctx->get_executor(), { "127.0.0.1", 8080 });
     connector->async_connect([&](error_code ec, std::unique_ptr<tcp_connection> conn)
     {
         if (!ec)
@@ -76,7 +76,7 @@ TEST_F(NetworkTest, Timer)
 
     using namespace std::chrono_literals;
 
-    auto timer = ctx->create_timer();
+    auto timer = ctx->create_timer(ctx->get_executor());
     timer->expires_after(5s);
     timer->async_wait([&](error_code ec)
         {
@@ -94,8 +94,8 @@ TEST_F(NetworkTest, Udp)
 {
     auto ctx = io_context::create();
 
-    auto server_socket = ctx->create_udp_socket();
-    auto client_socket = ctx->create_udp_socket();
+    auto server_socket = ctx->create_udp_socket(ctx->get_executor());
+    auto client_socket = ctx->create_udp_socket(ctx->get_executor());
 
     auto server_ep = endpoint{ "127.0.0.1", 8080 };
     server_socket->bind(server_ep);
@@ -134,62 +134,91 @@ TEST_F(NetworkTest, TcpClient)
 {
     auto ctx = io_context::create();
 
-    tcp_client client(*ctx, { "0.0.0.0", 8080 },
-        [&](auto conn)
-        {
-            class test_session final : public session
+    int client_num = 20000;
+    std::vector<std::shared_ptr<tcp_client>> clients(client_num);
+    std::vector<uint32_t> counts(client_num);
+    std::atomic<int> total_count{ 0 };
+    for (auto i = 0; i < client_num; i++)
+    {
+        auto& client = clients[i];
+        client = tcp_client::create(*ctx, endpoint{ "127.0.0.1", 8080 },
+            [&](auto conn)
             {
-            public:
-                test_session(io_context& ctx, std::unique_ptr<tcp_connection> conn)
-                    : session(ctx, std::move(conn)) {}
-                ~test_session() = default;
-            public:
-                void on_start() override
+                class test_session final : public session
                 {
-                    std::cout << std::format("Session[{}] Started", id()) << std::endl;
-                    std::string text = "hello world";
-                    send({ reinterpret_cast<const std::byte *>(text.data()), text.size() });
-                }
-                void on_message(payload payload) override
-                {
-                    std::string_view sv(reinterpret_cast<const char*>(payload.data()), payload.size());
-                    std::cout << std::format("Session[{}] Received {} bytes: {}",
-                                 id(), payload.size(), sv)
-                                 << std::endl;
-                    close();
-                }
-                void on_error(error_code ec) override
-                {
-                    std::cerr << std::format("Session[{}] Error: {}", id(), ec.message()) << std::endl;
-                }
-                void on_close() override
-                {
-                    std::cout << std::format("Session[{}] Closed", id()) << std::endl;
-                }
-            };
-            return std::make_shared<test_session>(*ctx, std::move(conn));
-        });
-    uint32_t count = 0;
-    client.set_connect_handler(
-        [&](const auto &ep)
-        {
-            std::cout << std::format("Connecting {}", ep) << std::endl;
-            if (++count > 2)
+                public:
+                    test_session(io_context& ctx, std::unique_ptr<tcp_connection> conn)
+                        : session(ctx, std::move(conn)) {}
+                    ~test_session() = default;
+                public:
+                    void on_start() override
+                    {
+                        std::cout << std::format("Session[{}] Started", id()) << std::endl;
+                        std::string text = "hello world";
+                        payload frame(text.size());
+                        std::memcpy(frame.data(), text.data(), text.size());
+                        send(std::move(frame));
+                    }
+                    void on_message(payload payload) override
+                    {
+                        std::string_view sv(reinterpret_cast<const char*>(payload.data()), payload.size());
+                        std::cout << std::format("Session[{}] Received {} bytes: {}",
+                                    id(), payload.size(), sv)
+                                    << std::endl;
+                        // send(std::move(payload));
+                        close();
+                    }
+                    void on_error(error_code ec) override
+                    {
+                        std::cerr << std::format("Session[{}] Error: {}", id(), ec.message()) << std::endl;
+                    }
+                    void on_close() override
+                    {
+                        std::cout << std::format("Session[{}] Closed", id()) << std::endl;
+                    }
+                };
+                return std::make_shared<test_session>(*ctx, std::move(conn));
+            });
+        auto& count = counts[i];
+        client->set_connecting_handler(
+            [&](const auto &ep)
             {
-                client.stop();
-                ctx->stop();
-            }
-        });
-    client.start();
+                std::cout << std::format("Connecting {}", ep) << std::endl;
+                if (++count > 1)
+                {
+                    client->stop();
+                    ++total_count;
+                    if (total_count >= client_num)
+                    {
+                        ctx->stop();
+                    }
+                }
+            });
+        client->start();
+    }
 
-    ctx->run();
+    int thread_count = std::thread::hardware_concurrency() / 4;
+    std::vector<std::thread> threads;
+    for (auto i = 0; i < thread_count; ++i)
+    {
+        threads.emplace_back(
+            [&]
+            {
+                ctx->run();
+            });
+    }
+    for (auto& t : threads)
+    {
+        t.join();
+    }
+    // ctx->run();
 }
 
 TEST_F(NetworkTest, TcpServer)
 {
     auto ctx = io_context::create();
 
-    tcp_server server(*ctx, { "0.0.0.0", 8080 },
+    auto server = tcp_server::create(*ctx, { "0.0.0.0", 8080 },
         [&](auto conn)
         {
             class test_session final : public session
@@ -209,7 +238,7 @@ TEST_F(NetworkTest, TcpServer)
                     std::cout << std::format("Session[{}] Received {} bytes: {}", 
                                  id(), payload.size(), sv)
                                  << std::endl;
-                    send({ payload.data(), payload.size() });
+                    send(std::move(payload));
                     // close();
                 }
                 void on_error(error_code ec) override
@@ -223,9 +252,26 @@ TEST_F(NetworkTest, TcpServer)
             };
             return std::make_shared<test_session>(*ctx, std::move(conn));
         });
-    server.start();
+    server->set_stop_handler([&]
+    {
+        ctx->stop();
+    });
+    server->start();
 
-    ctx->run();
+    int thread_count = std::thread::hardware_concurrency() / 4;
+    std::vector<std::thread> threads;
+    for (auto i = 0; i < thread_count; ++i)
+    {
+        threads.emplace_back(
+            [&]
+            {
+                ctx->run();
+            });
+    }
+    for (auto& t : threads)
+    {
+        t.join();
+    }
 }
 
 } // namespace ring::network

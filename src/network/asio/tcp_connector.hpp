@@ -14,23 +14,18 @@ namespace ring::network
     
 class asio_tcp_connector final : public tcp_connector
 {
-private:
-    enum class state
-    {
-        idle,
-        connecting,
-        connected,
-    };
 public:
-    explicit asio_tcp_connector(asio::io_context& asio_ctx, const endpoint& ep);
-    ~asio_tcp_connector() = default;
+    explicit asio_tcp_connector(asio::any_io_executor asio_ex, const endpoint& ep);
+    ~asio_tcp_connector();
 public:
     void async_connect(connect_handler handler) override;
-    void cancel() override;
+    void close() override;
+private:
+    void do_close();
 private:
     asio::ip::tcp::socket socket_;
     asio::ip::tcp::endpoint ep_;
-    state state_ = state::idle;
+    bool connecting_ = false;
 };
 
 } // namespace ring::network

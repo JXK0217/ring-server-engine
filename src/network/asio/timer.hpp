@@ -12,7 +12,7 @@ namespace ring::network
 class asio_timer final : public timer
 {
 public:
-    explicit asio_timer(asio::io_context& asio_ctx);
+    explicit asio_timer(asio::any_io_executor asio_ex);
     ~asio_timer() = default;
 public:
     void expires_after(std::chrono::steady_clock::duration duration) override;

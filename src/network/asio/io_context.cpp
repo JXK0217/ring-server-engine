@@ -1,7 +1,8 @@
 #include "io_context.hpp"
 
-#include <asio/post.hpp>
+#include <asio/strand.hpp>
 
+#include "executor.hpp"
 #include "tcp_connector.hpp"
 #include "tcp_listener.hpp"
 #include "timer.hpp"
@@ -11,7 +12,8 @@ namespace ring::network
 {
 
 asio_io_context::asio_io_context() :
-    work_guard_(asio::make_work_guard(ctx_)) {}
+    work_guard_(asio::make_work_guard(ctx_)),
+    ex_(std::make_unique<asio_executor>(ctx_.get_executor())) {}
 
 void asio_io_context::run()
 {
@@ -24,29 +26,38 @@ void asio_io_context::stop()
     ctx_.stop();
 }
 
-void asio_io_context::post(std::function<void()> task)
+executor& asio_io_context::get_executor()
 {
-    asio::post(ctx_, std::move(task));
+    return *ex_;
 }
 
-std::unique_ptr<tcp_listener> asio_io_context::create_tcp_listener(const endpoint& ep)
+std::unique_ptr<executor> asio_io_context::create_strand()
 {
-    return std::make_unique<asio_tcp_listener>(ctx_, ep);
+    return std::make_unique<asio_executor>(asio::make_strand(ctx_));
 }
 
-std::unique_ptr<tcp_connector> asio_io_context::create_tcp_connector(const endpoint& ep)
+std::unique_ptr<tcp_listener> asio_io_context::create_tcp_listener(executor &ex, const endpoint& ep)
 {
-    return std::make_unique<asio_tcp_connector>(ctx_, ep);
+    auto& asio_ex = static_cast<asio_executor&>(ex);
+    return std::make_unique<asio_tcp_listener>(asio_ex.raw_ex(), ep);
 }
 
-std::unique_ptr<udp_socket> asio_io_context::create_udp_socket()
+std::unique_ptr<tcp_connector> asio_io_context::create_tcp_connector(executor &ex, const endpoint& ep)
 {
-    return std::make_unique<asio_udp_socket>(ctx_);
+    auto& asio_ex = static_cast<asio_executor&>(ex);
+    return std::make_unique<asio_tcp_connector>(asio_ex.raw_ex(), ep);
 }
 
-std::unique_ptr<timer> asio_io_context::create_timer()
+std::unique_ptr<timer> asio_io_context::create_timer(executor &ex)
 {
-    return std::make_unique<asio_timer>(ctx_);
+    auto& asio_ex = static_cast<asio_executor&>(ex);
+    return std::make_unique<asio_timer>(asio_ex.raw_ex());
+}
+
+std::unique_ptr<udp_socket> asio_io_context::create_udp_socket(executor &ex)
+{
+    auto& asio_ex = static_cast<asio_executor&>(ex);
+    return std::make_unique<asio_udp_socket>(asio_ex.raw_ex());
 }
 
 std::unique_ptr<io_context> io_context::create()

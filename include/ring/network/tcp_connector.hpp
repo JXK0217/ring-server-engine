@@ -21,7 +21,7 @@ public:
     virtual ~tcp_connector() = default;
 public:
     virtual void async_connect(connect_handler handler) = 0;
-    virtual void cancel() = 0;
+    virtual void close() = 0;
 };
 
 } // namespace ring::network

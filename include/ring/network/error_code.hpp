@@ -3,8 +3,6 @@
 
 #include <system_error>
 
-#include "ring/core/export.hpp"
-
 namespace ring::network
 {
     

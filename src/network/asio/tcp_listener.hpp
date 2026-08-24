@@ -11,18 +11,17 @@ namespace ring::network
 class asio_tcp_listener final : public tcp_listener
 {
 public:
-    explicit asio_tcp_listener(asio::io_context& asio_ctx, const endpoint& ep);
-    ~asio_tcp_listener() = default;
+    explicit asio_tcp_listener(asio::any_io_executor asio_ex, const endpoint& ep);
+    ~asio_tcp_listener();
 public:
     void async_accept(accept_handler handler) override;
     void close() override;
     endpoint local_endpoint() const override;
 private:
-    void do_accept();
+    void do_accept(accept_handler handler);
+    void do_close();
 private:
     asio::ip::tcp::acceptor acceptor_;
-    asio::error_code ec_;
-    accept_handler handler_;
     bool accepting_ = false;
 };
 

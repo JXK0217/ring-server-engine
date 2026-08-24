@@ -3,8 +3,8 @@
 namespace ring::network
 {
 
-asio_timer::asio_timer(asio::io_context& asio_ctx) :
-    timer_(asio_ctx) {}
+asio_timer::asio_timer(asio::any_io_executor asio_ex) :
+    timer_(std::move(asio_ex)) {}
 
 void asio_timer::expires_after(std::chrono::steady_clock::duration duration)
 {
@@ -14,9 +14,9 @@ void asio_timer::expires_after(std::chrono::steady_clock::duration duration)
 void asio_timer::async_wait(wait_handler handler)
 {
     timer_.async_wait(
-        [h = std::move(handler)](asio::error_code ec)
+        [handler = std::move(handler)](asio::error_code ec)
         {
-            h(ec);
+            handler(ec);
         });
 }
 

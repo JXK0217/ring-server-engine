@@ -2,52 +2,62 @@
 
 #include "tcp_connection.hpp"
 
+#include "ring/core/exception.hpp"
+
 namespace ring::network
 {
 
-asio_tcp_connector::asio_tcp_connector(asio::io_context& asio_ctx, const endpoint& ep) :
-    socket_(asio_ctx), ep_(asio::ip::make_address(ep.address), ep.port) {}
+asio_tcp_connector::asio_tcp_connector(asio::any_io_executor asio_ex, const endpoint& ep) :
+    socket_(std::move(asio_ex))
+{
+    asio::error_code ec;
+    ep_ = asio::ip::tcp::endpoint(asio::ip::make_address(ep.address, ec), ep.port);
+    if (ec)
+    {
+        throw ring::core::exception("can not connect to " + ep.to_string() + ": " + ec.message());
+    }
+}
+
+asio_tcp_connector::~asio_tcp_connector()
+{
+    do_close();
+}
 
 void asio_tcp_connector::async_connect(connect_handler handler)
 {
-    if (state_ == state::connected)
+    if (connecting_)
     {
-        asio::post(socket_.get_executor(),
-            [handler = std::move(handler)]()
-            {
-                handler(std::make_error_code(std::errc::already_connected), nullptr);
-            });
-        return;
-    }
-    if (state_ == state::connecting)
-    {
-        asio::post(socket_.get_executor(),
-            [handler = std::move(handler)]()
-            {
-                handler(std::make_error_code(std::errc::device_or_resource_busy), nullptr);
-            });
-        return;
+        throw ring::core::exception("already connecting");
     }
 
-    state_ = state::connecting;
+    do_close();
+    connecting_ = true;
     socket_.async_connect(ep_,
-        [this, handler = std::move(handler)](asio::error_code ec) mutable
+        [this, handler = std::move(handler)](asio::error_code ec)
         {
+            connecting_ = false;
             if (ec)
             {
-                state_ = state::idle;
+                do_close();
                 handler(ec, nullptr);
                 return;
             }
-            state_ = state::connected;
             handler(ec, std::make_unique<asio_tcp_connection>(std::move(socket_)));
         });
 }
 
-void asio_tcp_connector::cancel()
+void asio_tcp_connector::close()
 {
-    asio::error_code ec;
-    socket_.cancel(ec);
+    do_close();
+}
+
+void asio_tcp_connector::do_close()
+{
+    if (socket_.is_open())
+    {
+        asio::error_code ec;
+        socket_.close(ec);
+    }
 }
 
 } // namespace ring::network
