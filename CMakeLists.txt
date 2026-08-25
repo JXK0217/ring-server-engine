@@ -35,6 +35,7 @@ endif()
 # add third-party dependencies
 add_subdirectory(third_party)
 
+add_subdirectory(src/app)
 add_subdirectory(src/core)
 add_subdirectory(src/logging)
 add_subdirectory(src/network)

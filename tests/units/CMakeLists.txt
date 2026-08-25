@@ -1,5 +1,9 @@
 # tests/unit/CMakeLists.txt - build configuration for unit tests
 
+if(BUILD_APP_MODULE)
+    add_subdirectory(app)
+endif()
+
 if(BUILD_CORE_MODULE)
     add_subdirectory(core)
 endif()
