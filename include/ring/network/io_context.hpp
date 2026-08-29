@@ -12,6 +12,7 @@ namespace ring::network
 {
 
 class executor;
+class signal_set;
 class tcp_connector;
 class tcp_listener;
 class timer;
@@ -30,10 +31,11 @@ public:
     virtual executor& get_executor() = 0;
 public:
     virtual std::unique_ptr<executor> create_strand() = 0;
-    virtual std::unique_ptr<tcp_connector> create_tcp_connector(executor &ex, const endpoint& ep) = 0;
-    virtual std::unique_ptr<tcp_listener> create_tcp_listener(executor &ex, const endpoint& ep) = 0;
-    virtual std::unique_ptr<timer> create_timer(executor &ex) = 0;
-    virtual std::unique_ptr<udp_socket> create_udp_socket(executor &ex) = 0;
+    virtual std::unique_ptr<signal_set> create_signal_set(executor& ex) = 0;
+    virtual std::unique_ptr<tcp_connector> create_tcp_connector(executor& ex, const endpoint& ep) = 0;
+    virtual std::unique_ptr<tcp_listener> create_tcp_listener(executor& ex, const endpoint& ep) = 0;
+    virtual std::unique_ptr<timer> create_timer(executor& ex) = 0;
+    virtual std::unique_ptr<udp_socket> create_udp_socket(executor& ex) = 0;
 };
 
 } // namespace ring::network

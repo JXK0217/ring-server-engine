@@ -5,6 +5,8 @@
 #include "test_helpers.hpp"
 
 #include "ring/network/io_context.hpp"
+#include "ring/network/signal_monitor.hpp"
+#include "ring/network/signal_set.hpp"
 #include "ring/network/tcp_client.hpp"
 #include "ring/network/tcp_connection.hpp"
 #include "ring/network/tcp_connector.hpp"
@@ -36,22 +38,50 @@ protected:
     }
 };
 
-// TEST_F(NetworkTest, Listen)
-// {
-//     auto ctx = io_context::create();
+TEST_F(NetworkTest, Signal)
+{
+    auto ctx = io_context::create();
 
-//     auto listener = ctx->create_tcp_listener(ctx->get_executor(), { "0.0.0.0", 8080 });
-//     listener->async_accept([&](error_code ec, std::unique_ptr<tcp_connection> conn)
-//     {
-//         if (!ec)
-//         {
-//             std::cout << "New connection from " << conn->remote_endpoint().address << std::endl;
-//         }
-//         ctx->stop();
-//     });
+    auto signal_set = ctx->create_signal_set(ctx->get_executor());
+    signal_set->add(SIGHUP);
+    signal_set->add(SIGINT);
+    signal_set->add(SIGTERM);
 
-//     ctx->run();
-// }
+    signal_set::wait_handler func_signal; 
+    func_signal = 
+        [&](error_code ec, int32_t sig)
+        {
+            std::cout << "signal caught: " << sig << ", ec: " << ec << std::endl;
+        
+            signal_set->async_wait(func_signal);
+            if (sig == SIGINT)
+            {
+                ctx->stop();
+                return;
+            }
+        };
+
+    signal_set->async_wait(func_signal);
+    
+    ctx->run();
+}
+
+TEST_F(NetworkTest, Listen)
+{
+    auto ctx = io_context::create();
+
+    auto listener = ctx->create_tcp_listener(ctx->get_executor(), { "0.0.0.0", 8080 });
+    listener->async_accept([&](error_code ec, std::unique_ptr<tcp_connection> conn)
+    {
+        if (!ec)
+        {
+            std::cout << "New connection from " << conn->remote_endpoint().address << std::endl;
+        }
+        ctx->stop();
+    });
+
+    ctx->run();
+}
 
 TEST_F(NetworkTest, Connect)
 {
@@ -272,6 +302,32 @@ TEST_F(NetworkTest, TcpServer)
     {
         t.join();
     }
+}
+
+TEST_F(NetworkTest, SignalMonitor)
+{
+    auto ctx = io_context::create();
+
+    auto monitor = signal_monitor::create(*ctx);
+    monitor->subscribe(SIGHUP,
+        [](int32_t sig)
+        {
+            std::cout << "signal caught: " << sig << std::endl;
+        });
+    monitor->subscribe(SIGHUP,
+        [](int32_t sig)
+        {
+            std::cout << "signal caught: " << sig << ", notice twice" << std::endl;
+        });
+    monitor->subscribe(SIGINT,
+        [&](int32_t sig)
+        {
+            std::cout << "signal caught: " << sig << std::endl;
+            ctx->stop();
+        });
+    monitor->start();
+    
+    ctx->run();
 }
 
 } // namespace ring::network
